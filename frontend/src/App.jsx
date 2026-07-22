@@ -1,26 +1,38 @@
-import { useEffect, useState } from 'react'
-import axios from 'axios'
-
-// URL backend. Nanti pas deploy, ganti lewat file .env (VITE_API_URL)
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { AuthProvider } from './context/AuthContext'
+import ProtectedRoute from './components/ProtectedRoute'
+import Login from './pages/Login'
+import Register from './pages/Register'
+import Dashboard from './pages/Dashboard'
+import Transactions from './pages/Transactions'
 
 function App() {
-  const [message, setMessage] = useState('Menghubungkan ke backend...')
-
-  useEffect(() => {
-    axios
-      .get(`${API_URL}/api/ping`)
-      .then((res) => setMessage(res.data.message))
-      .catch(() =>
-        setMessage('Gagal konek ke backend. Pastikan backend sudah jalan di port 5000.')
-      )
-  }, [])
-
   return (
-    <div style={{ fontFamily: 'sans-serif', padding: '2rem' }}>
-      <h1>Cuan Ledger</h1>
-      <p>Status backend: {message}</p>
-    </div>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/transactions"
+            element={
+              <ProtectedRoute>
+                <Transactions />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   )
 }
 
