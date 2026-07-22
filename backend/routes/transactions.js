@@ -192,4 +192,50 @@ router.get('/health-score', async (req, res) => {
   }
 })
 
+// GET tren cash flow (dikelompokkan per hari kalau rentang pendek, per bulan kalau panjang)
+router.get('/trend', async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query
+    const where = { userId: req.userId }
+
+    if (startDate && endDate) {
+      where.date = { gte: new Date(startDate), lte: new Date(endDate) }
+    }
+
+    const transactions = await prisma.transaction.findMany({ where, orderBy: { date: 'asc' } })
+
+    if (transactions.length === 0) {
+      return res.json({ groupBy: 'day', data: [] })
+    }
+
+    const dates = transactions.map((t) => new Date(t.date))
+    const minDate = startDate ? new Date(startDate) : new Date(Math.min(...dates))
+    const maxDate = endDate ? new Date(endDate) : new Date(Math.max(...dates))
+    const diffDays = Math.ceil((maxDate - minDate) / (1000 * 60 * 60 * 24))
+
+    // rentang <= 31 hari dikelompokkan per hari, lebih dari itu per bulan
+    const groupBy = diffDays <= 31 ? 'day' : 'month'
+
+    const map = {}
+    transactions.forEach((t) => {
+      const d = new Date(t.date)
+      const key =
+        groupBy === 'day'
+          ? d.toISOString().slice(0, 10)
+          : `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+
+      if (!map[key]) map[key] = { period: key, income: 0, expense: 0 }
+      if (t.type === 'income') map[key].income += Number(t.amount)
+      else map[key].expense += Number(t.amount)
+    })
+
+    const data = Object.values(map).sort((a, b) => a.period.localeCompare(b.period))
+
+    res.json({ groupBy, data })
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ error: 'Gagal ambil data tren' })
+  }
+})
+
 export default router
