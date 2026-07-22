@@ -54,6 +54,7 @@ function Dashboard() {
         </div>
         <div>
           <Link to="/transactions" style={styles.linkButton}>Kelola Transaksi</Link>
+          <Link to="/reports" style={styles.linkButton}>Lihat Laporan</Link>
           <button onClick={logout} style={styles.logoutButton}>Keluar</button>
         </div>
       </div>
