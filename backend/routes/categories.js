@@ -33,12 +33,35 @@ router.post('/', async (req, res) => {
     }
 
     const category = await prisma.category.create({
-      data: { name, type, userId: req.userId },
+      data: { name, type, userId: req.userId, budget: budget ? Number(budget) : null },
     })
     res.status(201).json(category)
   } catch (error) {
     console.error(error)
     res.status(500).json({ error: 'Gagal bikin kategori' })
+  }
+})
+
+// PATCH update budget kategori
+router.patch('/:id', async (req, res) => {
+  try {
+    const { id } = req.params
+    const { budget } = req.body
+
+    const category = await prisma.category.findUnique({ where: { id: Number(id) } })
+    if (!category || category.userId !== req.userId) {
+      return res.status(404).json({ error: 'Kategori tidak ditemukan' })
+    }
+
+    const updated = await prisma.category.update({
+      where: { id: Number(id) },
+      data: { budget: budget === '' || budget === null ? null : Number(budget) },
+    })
+
+    res.json(updated)
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ error: 'Gagal update budget' })
   }
 })
 

@@ -97,11 +97,12 @@ function Report() {
       .filter((t) => t.type === type)
       .forEach((t) => {
         const name = t.category?.name || 'Tanpa Kategori'
-        map[name] = (map[name] || 0) + Number(t.amount)
+        if (!map[name]) {
+          map[name] = { name, total: 0, budget: t.category?.budget ? Number(t.category.budget) : null }
+        }
+        map[name].total += Number(t.amount)
       })
-    return Object.entries(map)
-      .map(([name, total]) => ({ name, total }))
-      .sort((a, b) => b.total - a.total)
+    return Object.values(map).sort((a, b) => b.total - a.total)
   }
 
   const expenseBreakdown = breakdown('expense')
@@ -279,6 +280,34 @@ const trendChartData = trend.data.map((d) => ({
                     <Bar dataKey="total" fill="#dc2626" radius={[0, 6, 6, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
+
+                {expenseBreakdown.some((b) => b.budget) && (
+                  <div style={{ marginTop: '1.25rem' }}>
+                    <p style={{ fontSize: '0.8rem', color: '#888', marginBottom: '0.75rem' }}>
+                      Dibandingkan dengan budget bulanan (paling akurat kalau filter di "Bulan Ini")
+                    </p>
+                    {expenseBreakdown
+                      .filter((b) => b.budget)
+                      .map((b) => {
+                        const percent = Math.min(100, Math.round((b.total / b.budget) * 100))
+                        const over = b.total > b.budget
+                        return (
+                          <div key={b.name} style={{ marginBottom: '0.75rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.25rem' }}>
+                              <span>{b.name}</span>
+                              <span style={{ color: over ? '#dc2626' : '#555' }}>
+                                Rp {b.total.toLocaleString('id-ID')} / Rp {b.budget.toLocaleString('id-ID')}
+                                {over && ' ⚠️ Melebihi budget'}
+                              </span>
+                            </div>
+                            <div style={{ background: '#e5e7eb', borderRadius: '999px', height: '8px', overflow: 'hidden' }}>
+                              <div style={{ width: `${percent}%`, background: over ? '#dc2626' : '#16a34a', height: '100%' }} />
+                            </div>
+                          </div>
+                        )
+                      })}
+                  </div>
+                )}
               </>
             )}
           </div>

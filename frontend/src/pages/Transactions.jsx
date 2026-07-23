@@ -2,13 +2,50 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../utils/api'
 
+function BudgetRow({ category, onSaved }) {
+  const [value, setValue] = useState(category.budget ?? '')
+  const [saving, setSaving] = useState(false)
+
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      await api.patch(`/categories/${category.id}`, { budget: value === '' ? null : Number(value) })
+      onSaved()
+    } catch (err) {
+      alert('Gagal simpan budget')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
+      <span style={{ width: '140px' }}>{category.name}</span>
+      <input
+        type="number"
+        placeholder="Rp per bulan"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        style={{ padding: '0.4rem', borderRadius: '6px', border: '1px solid #ccc', width: '150px' }}
+      />
+      <button
+        onClick={handleSave}
+        disabled={saving}
+        style={{ padding: '0.4rem 0.8rem', borderRadius: '6px', border: 'none', background: '#2563eb', color: 'white', cursor: 'pointer' }}
+      >
+        {saving ? '...' : 'Simpan'}
+      </button>
+    </div>
+  )
+}
+
 function Transactions() {
   const [categories, setCategories] = useState([])
   const [transactions, setTransactions] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  const [catForm, setCatForm] = useState({ name: '', type: 'expense' })
+  const [catForm, setCatForm] = useState({ name: '', type: 'expense', budget: '' })
   const [txForm, setTxForm] = useState({
     type: 'expense',
     amount: '',
@@ -40,8 +77,12 @@ function Transactions() {
     e.preventDefault()
     if (!catForm.name) return
     try {
-      await api.post('/categories', catForm)
-      setCatForm({ name: '', type: 'expense' })
+      await api.post('/categories', {
+        name: catForm.name,
+        type: catForm.type,
+        budget: catForm.type === 'expense' && catForm.budget ? Number(catForm.budget) : null,
+      })
+      setCatForm({ name: '', type: 'expense', budget: '' })
       fetchAll()
     } catch (err) {
       alert(err.response?.data?.error || 'Gagal tambah kategori')
@@ -112,6 +153,16 @@ function Transactions() {
             </span>
           ))}
         </div>
+
+        {categories.filter((c) => c.type === 'expense').length > 0 && (
+          <div style={{ marginBottom: '1rem' }}>
+            <p style={{ fontWeight: 'bold', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Atur Budget Bulanan</p>
+            {categories.filter((c) => c.type === 'expense').map((c) => (
+              <BudgetRow key={c.id} category={c} onSaved={fetchAll} />
+            ))}
+          </div>
+        )}
+
         <form onSubmit={handleAddCategory} style={styles.inlineForm}>
           <input
             placeholder="Nama kategori (misal: Bahan Baku)"
@@ -119,10 +170,19 @@ function Transactions() {
             onChange={(e) => setCatForm({ ...catForm, name: e.target.value })}
             style={styles.input}
           />
-          <select value={catForm.type} onChange={(e) => setCatForm({ ...catForm, type: e.target.value })} style={styles.input}>
+          <select value={catForm.type} onChange={(e) => setCatForm({ ...catForm, type: e.target.value, budget: '' })} style={styles.input}>
             <option value="expense">Pengeluaran</option>
             <option value="income">Pemasukan</option>
           </select>
+          {catForm.type === 'expense' && (
+            <input
+              type="number"
+              placeholder="Budget bulanan (opsional)"
+              value={catForm.budget}
+              onChange={(e) => setCatForm({ ...catForm, budget: e.target.value })}
+              style={styles.input}
+            />
+          )}
           <button type="submit" style={styles.button}>Tambah Kategori</button>
         </form>
       </div>
