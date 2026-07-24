@@ -23,7 +23,7 @@ router.get('/', async (req, res) => {
 // POST bikin kategori baru
 router.post('/', async (req, res) => {
   try {
-    const { name, type } = req.body
+    const { name, type, budget } = req.body
 
     if (!name || !type) {
       return res.status(400).json({ error: 'Nama dan tipe kategori wajib diisi' })
