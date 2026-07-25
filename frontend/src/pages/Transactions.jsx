@@ -19,19 +19,19 @@ function BudgetRow({ category, onSaved }) {
   }
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
-      <span style={{ width: '140px' }}>{category.name}</span>
+    <div className="flex items-center gap-3 mb-2">
+      <span className="w-32 text-sm text-ink/70 shrink-0">{category.name}</span>
       <input
         type="number"
         placeholder="Rp per bulan"
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        style={{ padding: '0.4rem', borderRadius: '6px', border: '1px solid #ccc', width: '150px' }}
+        className="flex-1 max-w-[160px] font-mono text-sm px-3 py-1.5 rounded-lg border border-ink/15 focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-brand"
       />
       <button
         onClick={handleSave}
         disabled={saving}
-        style={{ padding: '0.4rem 0.8rem', borderRadius: '6px', border: 'none', background: '#2563eb', color: 'white', cursor: 'pointer' }}
+        className="px-3 py-1.5 rounded-lg bg-brand text-white text-sm font-medium hover:bg-brand/90 transition-colors disabled:opacity-60"
       >
         {saving ? '...' : 'Simpan'}
       </button>
@@ -144,7 +144,7 @@ function Transactions() {
     ])
 
     const escapeCSV = (value) => {
-    const str = String(value)
+      const str = String(value)
       if (str.includes(',') || str.includes('"') || str.includes('\n')) {
         return `"${str.replace(/"/g, '""')}"`
       }
@@ -155,7 +155,6 @@ function Transactions() {
       .map((row) => row.map(escapeCSV).join(','))
       .join('\n')
 
-    // \uFEFF (BOM) biar Excel baca simbol "Rp" dengan benar, gak jadi karakter aneh
     const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
@@ -165,49 +164,61 @@ function Transactions() {
     URL.revokeObjectURL(url)
   }
 
-  if (loading) return <div style={styles.center}>Memuat data...</div>
+  if (loading) return <div className="min-h-screen flex items-center justify-center text-ink/60">Memuat data...</div>
 
   const filteredCategories = categories.filter((c) => c.type === txForm.type)
 
   return (
-    <div style={styles.page}>
-      <div style={styles.header}>
-        <Link to="/dashboard" style={styles.backLink}>&larr; Kembali ke Dashboard</Link>
-        <h1>Kelola Transaksi</h1>
+    <div className="min-h-screen max-w-3xl mx-auto px-4 py-8 sm:px-6">
+      <div className="mb-6">
+        <Link to="/dashboard" className="text-sm text-brand font-medium hover:underline">&larr; Kembali ke Dashboard</Link>
+        <h1 className="font-display text-2xl text-ink mt-2">Kelola Transaksi</h1>
       </div>
 
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {error && <p className="text-sm text-expense mb-4">{error}</p>}
 
       {/* KATEGORI */}
-      <div style={styles.card}>
-        <h3 style={{ marginTop: 0 }}>Kategori</h3>
-        <div style={styles.tagRow}>
-          {categories.length === 0 && <p style={{ color: '#888' }}>Belum ada kategori. Tambah dulu di bawah.</p>}
+      <div className="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-ink/10 mb-5">
+        <h3 className="font-display text-lg text-ink mb-4">Kategori</h3>
+
+        <div className="flex flex-wrap gap-2 mb-5">
+          {categories.length === 0 && <p className="text-sm text-ink/40">Belum ada kategori. Tambah dulu di bawah.</p>}
           {categories.map((c) => (
-            <span key={c.id} style={{ ...styles.tag, background: c.type === 'income' ? '#dcfce7' : '#fee2e2' }}>
+            <span
+              key={c.id}
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm border ${
+                c.type === 'income'
+                  ? 'bg-income/10 text-income border-income/20'
+                  : 'bg-expense/10 text-expense border-expense/20'
+              }`}
+            >
               {c.name}
-              <button onClick={() => handleDeleteCategory(c.id)} style={styles.tagDelete}>&times;</button>
+              <button onClick={() => handleDeleteCategory(c.id)} className="hover:opacity-60 font-bold leading-none">&times;</button>
             </span>
           ))}
         </div>
 
         {categories.filter((c) => c.type === 'expense').length > 0 && (
-          <div style={{ marginBottom: '1rem' }}>
-            <p style={{ fontWeight: 'bold', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Atur Budget Bulanan</p>
+          <div className="mb-5 pb-5 border-b border-ink/10">
+            <p className="text-sm font-medium text-ink mb-3">Atur Budget Bulanan</p>
             {categories.filter((c) => c.type === 'expense').map((c) => (
               <BudgetRow key={c.id} category={c} onSaved={fetchAll} />
             ))}
           </div>
         )}
 
-        <form onSubmit={handleAddCategory} style={styles.inlineForm}>
+        <form onSubmit={handleAddCategory} className="flex flex-wrap gap-2">
           <input
             placeholder="Nama kategori (misal: Bahan Baku)"
             value={catForm.name}
             onChange={(e) => setCatForm({ ...catForm, name: e.target.value })}
-            style={styles.input}
+            className="flex-1 min-w-[180px] px-3 py-2 rounded-lg border border-ink/15 text-sm focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-brand"
           />
-          <select value={catForm.type} onChange={(e) => setCatForm({ ...catForm, type: e.target.value, budget: '' })} style={styles.input}>
+          <select
+            value={catForm.type}
+            onChange={(e) => setCatForm({ ...catForm, type: e.target.value, budget: '' })}
+            className="px-3 py-2 rounded-lg border border-ink/15 text-sm focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-brand"
+          >
             <option value="expense">Pengeluaran</option>
             <option value="income">Pemasukan</option>
           </select>
@@ -217,21 +228,23 @@ function Transactions() {
               placeholder="Budget bulanan (opsional)"
               value={catForm.budget}
               onChange={(e) => setCatForm({ ...catForm, budget: e.target.value })}
-              style={styles.input}
+              className="px-3 py-2 rounded-lg border border-ink/15 text-sm w-44 focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-brand"
             />
           )}
-          <button type="submit" style={styles.button}>Tambah Kategori</button>
+          <button type="submit" className="px-4 py-2 rounded-lg bg-brand text-white text-sm font-medium hover:bg-brand/90 transition-colors">
+            Tambah Kategori
+          </button>
         </form>
       </div>
 
       {/* TAMBAH TRANSAKSI */}
-      <div style={styles.card}>
-        <h3 style={{ marginTop: 0 }}>Tambah Transaksi</h3>
-        <form onSubmit={handleAddTransaction} style={styles.txForm}>
+      <div className="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-ink/10 mb-5">
+        <h3 className="font-display text-lg text-ink mb-4">Tambah Transaksi</h3>
+        <form onSubmit={handleAddTransaction} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <select
             value={txForm.type}
             onChange={(e) => setTxForm({ ...txForm, type: e.target.value, categoryId: '' })}
-            style={styles.input}
+            className="px-3 py-2 rounded-lg border border-ink/15 text-sm focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-brand"
           >
             <option value="expense">Pengeluaran</option>
             <option value="income">Pemasukan</option>
@@ -239,7 +252,7 @@ function Transactions() {
           <select
             value={txForm.categoryId}
             onChange={(e) => setTxForm({ ...txForm, categoryId: e.target.value })}
-            style={styles.input}
+            className="px-3 py-2 rounded-lg border border-ink/15 text-sm focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-brand"
           >
             <option value="">Pilih kategori</option>
             {filteredCategories.map((c) => (
@@ -251,89 +264,86 @@ function Transactions() {
             placeholder="Jumlah (Rp)"
             value={txForm.amount}
             onChange={(e) => setTxForm({ ...txForm, amount: e.target.value })}
-            style={styles.input}
+            className="px-3 py-2 rounded-lg border border-ink/15 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-brand"
           />
           <input
             type="date"
             value={txForm.date}
             onChange={(e) => setTxForm({ ...txForm, date: e.target.value })}
-            style={styles.input}
+            className="px-3 py-2 rounded-lg border border-ink/15 text-sm focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-brand"
           />
           <input
             placeholder="Keterangan (opsional)"
             value={txForm.description}
             onChange={(e) => setTxForm({ ...txForm, description: e.target.value })}
-            style={{ ...styles.input, gridColumn: 'span 2' }}
+            className="sm:col-span-2 px-3 py-2 rounded-lg border border-ink/15 text-sm focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-brand"
           />
-          <button type="submit" style={styles.button}>Simpan Transaksi</button>
+          <button
+            type="submit"
+            className="sm:col-span-2 px-4 py-2.5 rounded-lg bg-brand text-white text-sm font-medium hover:bg-brand/90 transition-colors"
+          >
+            Simpan Transaksi
+          </button>
         </form>
       </div>
 
       {/* DAFTAR TRANSAKSI */}
-      <div style={styles.card}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h3 style={{ marginTop: 0 }}>Riwayat Transaksi</h3>
+      <div className="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-ink/10">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-display text-lg text-ink">Riwayat Transaksi</h3>
           {transactions.length > 0 && (
-            <button onClick={handleExportCSV} style={styles.exportButton}>📊 Ekspor CSV</button>
+            <button
+              onClick={handleExportCSV}
+              className="px-3 py-1.5 rounded-lg border border-income text-income text-sm font-medium hover:bg-income/5 transition-colors"
+            >
+              📊 Ekspor CSV
+            </button>
           )}
         </div>
         {transactions.length === 0 ? (
-          <p style={{ color: '#888' }}>Belum ada transaksi.</p>
+          <p className="text-sm text-ink/40">Belum ada transaksi.</p>
         ) : (
-          <table style={styles.table}>
-            <thead>
-              <tr>
-                <th style={styles.th}>Tanggal</th>
-                <th style={styles.th}>Tipe</th>
-                <th style={styles.th}>Kategori</th>
-                <th style={styles.th}>Keterangan</th>
-                <th style={styles.th}>Jumlah</th>
-                <th style={styles.th}></th>
-              </tr>
-            </thead>
-            <tbody>
-              {transactions.map((t) => (
-                <tr key={t.id}>
-                  <td style={styles.td}>{new Date(t.date).toLocaleDateString('id-ID')}</td>
-                  <td style={styles.td}>
-                    <span style={{ color: t.type === 'income' ? '#16a34a' : '#dc2626' }}>
-                      {t.type === 'income' ? 'Masuk' : 'Keluar'}
-                    </span>
-                  </td>
-                  <td style={styles.td}>{t.category?.name}</td>
-                  <td style={styles.td}>{t.description || '-'}</td>
-                  <td style={styles.td}>Rp {Number(t.amount).toLocaleString('id-ID')}</td>
-                  <td style={styles.td}>
-                    <button onClick={() => handleDeleteTransaction(t.id)} style={styles.deleteButton}>Hapus</button>
-                  </td>
+          <div className="overflow-x-auto -mx-5 sm:mx-0 px-5 sm:px-0">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs text-ink/50 uppercase tracking-wide border-b border-ink/10">
+                  <th className="py-2 pr-4">Tanggal</th>
+                  <th className="py-2 pr-4">Tipe</th>
+                  <th className="py-2 pr-4">Kategori</th>
+                  <th className="py-2 pr-4">Keterangan</th>
+                  <th className="py-2 pr-4">Jumlah</th>
+                  <th className="py-2"></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {transactions.map((t) => (
+                  <tr key={t.id} className="border-b border-ink/5">
+                    <td className="py-2.5 pr-4 whitespace-nowrap">{new Date(t.date).toLocaleDateString('id-ID')}</td>
+                    <td className="py-2.5 pr-4">
+                      <span className={t.type === 'income' ? 'text-income font-medium' : 'text-expense font-medium'}>
+                        {t.type === 'income' ? 'Masuk' : 'Keluar'}
+                      </span>
+                    </td>
+                    <td className="py-2.5 pr-4">{t.category?.name}</td>
+                    <td className="py-2.5 pr-4 text-ink/60">{t.description || '-'}</td>
+                    <td className="py-2.5 pr-4 font-mono whitespace-nowrap">Rp {Number(t.amount).toLocaleString('id-ID')}</td>
+                    <td className="py-2.5">
+                      <button
+                        onClick={() => handleDeleteTransaction(t.id)}
+                        className="px-2.5 py-1 rounded-md border border-expense/30 text-expense text-xs font-medium hover:bg-expense/5 transition-colors"
+                      >
+                        Hapus
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>
   )
-}
-
-const styles = {
-  page: { padding: '2rem', maxWidth: '900px', margin: '0 auto' },
-  header: { marginBottom: '1.5rem' },
-  backLink: { color: '#2563eb', textDecoration: 'none' },
-  card: { background: '#f9fafb', border: '1px solid #eee', borderRadius: '10px', padding: '1.25rem', marginBottom: '1.25rem' },
-  tagRow: { display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' },
-  tag: { padding: '0.3rem 0.7rem', borderRadius: '999px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' },
-  tagDelete: { border: 'none', background: 'none', cursor: 'pointer', fontWeight: 'bold' },
-  inlineForm: { display: 'flex', gap: '0.5rem', flexWrap: 'wrap' },
-  txForm: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' },
-  input: { padding: '0.6rem', borderRadius: '6px', border: '1px solid #ccc' },
-  button: { padding: '0.6rem 1rem', borderRadius: '6px', border: 'none', background: '#2563eb', color: 'white', cursor: 'pointer' },
-  deleteButton: { padding: '0.3rem 0.6rem', borderRadius: '6px', border: '1px solid #dc2626', background: 'white', color: '#dc2626', cursor: 'pointer' },
-  table: { width: '100%', borderCollapse: 'collapse' },
-  th: { textAlign: 'left', borderBottom: '2px solid #ddd', padding: '0.5rem' },
-  td: { borderBottom: '1px solid #eee', padding: '0.5rem' },
-  center: { display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' },
-  exportButton: { padding: '0.5rem 1rem', borderRadius: '6px', border: 'none', background: '#16a34a', color: 'white', cursor: 'pointer', fontWeight: 'bold' },
 }
 
 export default Transactions
