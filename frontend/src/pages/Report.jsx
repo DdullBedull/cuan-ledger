@@ -47,6 +47,7 @@ function Report() {
   const [summary, setSummary] = useState(null)
   const [transactions, setTransactions] = useState([])
   const [trend, setTrend] = useState({ groupBy: 'day', data: [] })
+  const [insights, setInsights] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -54,25 +55,33 @@ function Report() {
     setLoading(true)
     setError('')
     try {
-        const params = {}
-        if (r.startDate && r.endDate) {
+      const params = {}
+      if (r.startDate && r.endDate) {
         params.startDate = r.startDate
         params.endDate = r.endDate
-        }
-        const [summaryRes, txRes, trendRes] = await Promise.all([
+      }
+
+      const promises = [
         api.get('/transactions/summary', { params }),
         api.get('/transactions', { params }),
         api.get('/transactions/trend', { params }),
-        ])
-        setSummary(summaryRes.data)
-        setTransactions(txRes.data)
-        setTrend(trendRes.data)
-        } catch (err) {
-            setError('Gagal ambil data laporan')
-        } finally {
-            setLoading(false)
-        }
+      ]
+      // insight cuma bisa dihitung kalau ada periode spesifik (bukan "Semua Waktu")
+      if (params.startDate && params.endDate) {
+        promises.push(api.get('/transactions/insights', { params }))
+      }
+
+      const results = await Promise.all(promises)
+      setSummary(results[0].data)
+      setTransactions(results[1].data)
+      setTrend(results[2].data)
+      setInsights(results[3] ? results[3].data.insights : [])
+    } catch (err) {
+      setError('Gagal ambil data laporan')
+    } finally {
+      setLoading(false)
     }
+  }
 
   useEffect(() => {
     fetchReport(range)
@@ -245,6 +254,23 @@ const trendChartData = trend.data.map((d) => ({
               </p>
             </div>
           </div>
+
+          {/* INSIGHT */}
+          {insights.length > 0 && (
+            <div style={styles.card}>
+              <h3 style={{ marginTop: 0 }}>💡 Insight Otomatis</h3>
+              <ul style={{ margin: 0, paddingLeft: '1.2rem' }}>
+                {insights.map((text, i) => (
+                  <li key={i} style={{ marginBottom: '0.5rem', color: '#374151' }}>{text}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {preset === 'all' && (
+            <p style={{ fontSize: '0.85rem', color: '#888', marginTop: '-0.5rem', marginBottom: '1.25rem' }}>
+              💡 Insight otomatis muncul jika memilih periode tertentu (bukan "Semua Waktu").
+            </p>
+          )}
         
           {/* TREND CASH FLOW */}
           <div style={styles.card}>
