@@ -128,6 +128,43 @@ function Transactions() {
     }
   }
 
+  const handleExportCSV = () => {
+    if (transactions.length === 0) {
+      alert('Belum ada transaksi untuk diekspor')
+      return
+    }
+
+    const headers = ['Tanggal', 'Tipe', 'Kategori', 'Keterangan', 'Jumlah']
+    const rows = transactions.map((t) => [
+      new Date(t.date).toLocaleDateString('id-ID'),
+      t.type === 'income' ? 'Pemasukan' : 'Pengeluaran',
+      t.category?.name || '',
+      t.description || '',
+      t.amount,
+    ])
+
+    const escapeCSV = (value) => {
+    const str = String(value)
+      if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+        return `"${str.replace(/"/g, '""')}"`
+      }
+      return str
+    }
+
+    const csvContent = [headers, ...rows]
+      .map((row) => row.map(escapeCSV).join(','))
+      .join('\n')
+
+    // \uFEFF (BOM) biar Excel baca simbol "Rp" dengan benar, gak jadi karakter aneh
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `riwayat-transaksi_${new Date().toISOString().slice(0, 10)}.csv`
+    link.click()
+    URL.revokeObjectURL(url)
+  }
+
   if (loading) return <div style={styles.center}>Memuat data...</div>
 
   const filteredCategories = categories.filter((c) => c.type === txForm.type)
@@ -234,7 +271,12 @@ function Transactions() {
 
       {/* DAFTAR TRANSAKSI */}
       <div style={styles.card}>
-        <h3 style={{ marginTop: 0 }}>Riwayat Transaksi</h3>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h3 style={{ marginTop: 0 }}>Riwayat Transaksi</h3>
+          {transactions.length > 0 && (
+            <button onClick={handleExportCSV} style={styles.exportButton}>📊 Ekspor CSV</button>
+          )}
+        </div>
         {transactions.length === 0 ? (
           <p style={{ color: '#888' }}>Belum ada transaksi.</p>
         ) : (
@@ -291,6 +333,7 @@ const styles = {
   th: { textAlign: 'left', borderBottom: '2px solid #ddd', padding: '0.5rem' },
   td: { borderBottom: '1px solid #eee', padding: '0.5rem' },
   center: { display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' },
+  exportButton: { padding: '0.5rem 1rem', borderRadius: '6px', border: 'none', background: '#16a34a', color: 'white', cursor: 'pointer', fontWeight: 'bold' },
 }
 
 export default Transactions

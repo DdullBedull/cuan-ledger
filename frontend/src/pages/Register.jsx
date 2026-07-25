@@ -26,29 +26,75 @@ function Register() {
   }
 
   return (
-    <div style={styles.container}>
-      <form onSubmit={handleSubmit} style={styles.form}>
-        <h1>Daftar Cuan Ledger</h1>
-        {error && <p style={styles.error}>{error}</p>}
-        <input name="name" placeholder="Nama lengkap" value={form.name} onChange={handleChange} required style={styles.input} />
-        <input name="businessName" placeholder="Nama usaha (opsional)" value={form.businessName} onChange={handleChange} style={styles.input} />
-        <input name="email" type="email" placeholder="Email" value={form.email} onChange={handleChange} required style={styles.input} />
-        <input name="password" type="password" placeholder="Password" value={form.password} onChange={handleChange} required style={styles.input} />
-        <button type="submit" disabled={loading} style={styles.button}>
-          {loading ? 'Memproses...' : 'Daftar'}
-        </button>
-        <p>Sudah punya akun? <Link to="/login">Masuk di sini</Link></p>
-      </form>
+    <div className="min-h-screen flex items-center justify-center bg-canvas px-4">
+      <div className="w-full max-w-sm">
+        <div className="text-center mb-8">
+          <span className="inline-block text-3xl font-display font-semibold text-ink">Cuan Ledger</span>
+          <p className="text-sm text-ink/60 mt-1">Mulai catat keuangan usahamu hari ini</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="bg-white border border-ink/10 rounded-2xl p-6 shadow-sm">
+          <h1 className="font-display text-xl text-ink mb-5">Daftar</h1>
+
+          {error && (
+            <p className="text-sm text-expense bg-expense/10 border border-expense/20 rounded-lg px-3 py-2 mb-4">
+              {error}
+            </p>
+          )}
+
+          <label className="block text-sm text-ink/70 mb-1">Nama lengkap</label>
+          <input
+            name="name"
+            value={form.name}
+            onChange={handleChange}
+            required
+            className="w-full mb-4 px-3 py-2 rounded-lg border border-ink/15 focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-brand"
+          />
+
+          <label className="block text-sm text-ink/70 mb-1">Nama usaha <span className="text-ink/40">(opsional)</span></label>
+          <input
+            name="businessName"
+            value={form.businessName}
+            onChange={handleChange}
+            className="w-full mb-4 px-3 py-2 rounded-lg border border-ink/15 focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-brand"
+          />
+
+          <label className="block text-sm text-ink/70 mb-1">Email</label>
+          <input
+            name="email"
+            type="email"
+            value={form.email}
+            onChange={handleChange}
+            required
+            className="w-full mb-4 px-3 py-2 rounded-lg border border-ink/15 focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-brand"
+          />
+
+          <label className="block text-sm text-ink/70 mb-1">Password</label>
+          <input
+            name="password"
+            type="password"
+            value={form.password}
+            onChange={handleChange}
+            required
+            className="w-full mb-6 px-3 py-2 rounded-lg border border-ink/15 focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-brand"
+          />
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-brand text-white font-medium rounded-lg py-2.5 hover:bg-brand/90 transition-colors disabled:opacity-60"
+          >
+            {loading ? 'Memproses...' : 'Daftar'}
+          </button>
+
+          <p className="text-sm text-ink/60 text-center mt-5">
+            Sudah punya akun?{' '}
+            <Link to="/login" className="text-brand font-medium hover:underline">Masuk di sini</Link>
+          </p>
+        </form>
+      </div>
     </div>
   )
-}
-
-const styles = {
-  container: { display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' },
-  form: { display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '320px' },
-  input: { padding: '0.6rem', borderRadius: '6px', border: '1px solid #ccc' },
-  button: { padding: '0.6rem', borderRadius: '6px', border: 'none', background: '#2563eb', color: 'white', cursor: 'pointer' },
-  error: { color: 'red', fontSize: '0.9rem' },
 }
 
 export default Register
