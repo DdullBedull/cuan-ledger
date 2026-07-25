@@ -1,8 +1,16 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts'
+import { BarChart, Bar, Cell, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts'
 import api from '../utils/api'
 import { useAuth } from '../context/AuthContext'
+
+const statusStyles = {
+  'Sehat': 'border-income text-income',
+  'Cukup Sehat': 'border-gold text-gold',
+  'Perlu Perhatian': 'border-expense text-expense',
+  'Kritis': 'border-expense text-expense',
+  'Belum Ada Data': 'border-ink/30 text-ink/50',
+}
 
 function Dashboard() {
   const { user, logout } = useAuth()
@@ -29,102 +37,84 @@ function Dashboard() {
     fetchData()
   }, [])
 
-  if (loading) return <div style={styles.center}>Memuat data...</div>
-  if (error) return <div style={styles.center}>{error}</div>
+  if (loading) return <div className="min-h-screen flex items-center justify-center text-ink/60">Memuat data...</div>
+  if (error) return <div className="min-h-screen flex items-center justify-center text-expense">{error}</div>
 
   const chartData = [
-    { name: 'Pemasukan', jumlah: summary.totalIncome },
-    { name: 'Pengeluaran', jumlah: summary.totalExpense },
+    { name: 'Pemasukan', jumlah: summary.totalIncome, color: '#15803D' },
+    { name: 'Pengeluaran', jumlah: summary.totalExpense, color: '#B91C1C' },
   ]
 
-  const statusColor = {
-    'Sehat': '#16a34a',
-    'Cukup Sehat': '#ca8a04',
-    'Perlu Perhatian': '#ea580c',
-    'Kritis': '#dc2626',
-    'Belum Ada Data': '#6b7280',
-  }
-
   return (
-    <div style={styles.page}>
-      <div style={styles.header}>
+    <div className="min-h-screen max-w-5xl mx-auto px-4 py-8 sm:px-6">
+      {/* HEADER */}
+      <div className="flex flex-col gap-4 mb-8 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 style={{ margin: 0 }}>Halo, {user?.name} 👋</h1>
-          <p style={{ margin: 0, color: '#666' }}>{user?.email}</p>
+          <h1 className="font-display text-2xl text-ink">Halo, {user?.name} 👋</h1>
+          <p className="text-sm text-ink/50">{user?.email}</p>
         </div>
-        <div>
-          <Link to="/transactions" style={styles.linkButton}>Kelola Transaksi</Link>
-          <Link to="/reports" style={styles.linkButton}>Lihat Laporan</Link>
-          <button onClick={logout} style={styles.logoutButton}>Keluar</button>
+        <div className="flex flex-wrap gap-2">
+          <Link to="/reports" className="px-4 py-2 rounded-lg border border-ink/15 text-sm font-medium text-ink hover:bg-ink/5 transition-colors">
+            Lihat Laporan
+          </Link>
+          <Link to="/transactions" className="px-4 py-2 rounded-lg bg-brand text-white text-sm font-medium hover:bg-brand/90 transition-colors">
+            Kelola Transaksi
+          </Link>
+          <button onClick={logout} className="px-4 py-2 rounded-lg border border-ink/15 text-sm font-medium text-ink/60 hover:bg-ink/5 transition-colors">
+            Keluar
+          </button>
         </div>
       </div>
 
-      <div style={styles.cardsRow}>
-        <div style={styles.card}>
-          <p style={styles.cardLabel}>Total Pemasukan</p>
-          <p style={{ ...styles.cardValue, color: '#16a34a' }}>Rp {summary.totalIncome.toLocaleString('id-ID')}</p>
+      {/* RINGKASAN */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+        <div className="bg-white rounded-2xl p-5 border-l-4 border-income shadow-sm">
+          <p className="text-xs text-ink/50 uppercase tracking-wide">Total Pemasukan</p>
+          <p className="font-mono text-2xl font-bold text-income mt-1">Rp {summary.totalIncome.toLocaleString('id-ID')}</p>
         </div>
-        <div style={styles.card}>
-          <p style={styles.cardLabel}>Total Pengeluaran</p>
-          <p style={{ ...styles.cardValue, color: '#dc2626' }}>Rp {summary.totalExpense.toLocaleString('id-ID')}</p>
+        <div className="bg-white rounded-2xl p-5 border-l-4 border-expense shadow-sm">
+          <p className="text-xs text-ink/50 uppercase tracking-wide">Total Pengeluaran</p>
+          <p className="font-mono text-2xl font-bold text-expense mt-1">Rp {summary.totalExpense.toLocaleString('id-ID')}</p>
         </div>
-        <div style={styles.card}>
-          <p style={styles.cardLabel}>Saldo</p>
-          <p style={{ ...styles.cardValue, color: summary.balance >= 0 ? '#16a34a' : '#dc2626' }}>
+        <div className={`bg-white rounded-2xl p-5 border-l-4 shadow-sm ${summary.balance >= 0 ? 'border-income' : 'border-expense'}`}>
+          <p className="text-xs text-ink/50 uppercase tracking-wide">Saldo</p>
+          <p className={`font-mono text-2xl font-bold mt-1 ${summary.balance >= 0 ? 'text-income' : 'text-expense'}`}>
             Rp {summary.balance.toLocaleString('id-ID')}
           </p>
         </div>
       </div>
 
-      <div style={styles.bottomRow}>
-        <div style={styles.chartCard}>
-          <p style={styles.cardLabel}>Pemasukan vs Pengeluaran</p>
+      {/* CHART + SKOR */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+        <div className="lg:col-span-3 bg-white rounded-2xl p-5 shadow-sm border border-ink/10">
+          <p className="text-sm font-medium text-ink mb-3">Pemasukan vs Pengeluaran</p>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={chartData}>
-              <XAxis dataKey="name" />
-              <YAxis />
+              <XAxis dataKey="name" fontSize={12} stroke="#1E2333" strokeOpacity={0.4} />
+              <YAxis fontSize={12} stroke="#1E2333" strokeOpacity={0.4} />
               <Tooltip formatter={(value) => `Rp ${value.toLocaleString('id-ID')}`} />
-              <Bar dataKey="jumlah" fill="#2563eb" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="jumlah" radius={[6, 6, 0, 0]}>
+                {chartData.map((entry, index) => (
+                  <Cell key={index} fill={entry.color} />
+                ))}
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
 
-        <div style={styles.scoreCard}>
-          <p style={styles.cardLabel}>Skor Kesehatan Keuangan</p>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', margin: '0.5rem 0' }}>
-            <span style={{ fontSize: '2.5rem', fontWeight: 'bold' }}>{healthScore.score}</span>
-            <span
-              style={{
-                padding: '0.3rem 0.8rem',
-                borderRadius: '999px',
-                background: statusColor[healthScore.status],
-                color: 'white',
-                fontSize: '0.85rem',
-              }}
-            >
+        <div className="lg:col-span-2 bg-white rounded-2xl p-5 shadow-sm border border-ink/10 flex flex-col">
+          <p className="text-sm font-medium text-ink mb-3">Skor Kesehatan Keuangan</p>
+          <div className="flex items-center gap-3 mb-3">
+            <span className="font-display text-4xl font-semibold text-ink">{healthScore.score}</span>
+            <span className={`stamp-badge ${statusStyles[healthScore.status] || 'border-ink/30 text-ink/50'}`}>
               {healthScore.status}
             </span>
           </div>
-          <p style={{ color: '#555', fontSize: '0.9rem' }}>{healthScore.message}</p>
+          <p className="text-sm text-ink/60">{healthScore.message}</p>
         </div>
       </div>
     </div>
   )
-}
-
-const styles = {
-  page: { padding: '2rem', maxWidth: '1000px', margin: '0 auto' },
-  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' },
-  linkButton: { marginRight: '0.75rem', padding: '0.5rem 1rem', background: '#2563eb', color: 'white', borderRadius: '6px', textDecoration: 'none' },
-  logoutButton: { padding: '0.5rem 1rem', borderRadius: '6px', border: '1px solid #ccc', background: 'white', cursor: 'pointer' },
-  cardsRow: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '1rem' },
-  card: { background: '#f9fafb', border: '1px solid #eee', borderRadius: '10px', padding: '1.25rem' },
-  cardLabel: { color: '#666', fontSize: '0.85rem', margin: 0 },
-  cardValue: { fontSize: '1.5rem', fontWeight: 'bold', margin: '0.3rem 0 0' },
-  bottomRow: { display: 'grid', gridTemplateColumns: '1.3fr 1fr', gap: '1rem' },
-  chartCard: { background: '#f9fafb', border: '1px solid #eee', borderRadius: '10px', padding: '1.25rem' },
-  scoreCard: { background: '#f9fafb', border: '1px solid #eee', borderRadius: '10px', padding: '1.25rem' },
-  center: { display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' },
 }
 
 export default Dashboard
